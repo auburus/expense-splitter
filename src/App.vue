@@ -1,49 +1,41 @@
-<script lang="ts">
+<script setup lang="ts">
 // import HelloWorld from './components/HelloWorld.vue'
 // import TheWelcome from './components/TheWelcome.vue'
-import { defineComponent } from 'vue'
+import { ref, watch } from 'vue'
 
-export default defineComponent({
-  data() {
-    return {
-      participants: [],
-      newParticipant: '',
-      error_msg: '',
-    }
-  },
-  mounted() {
-    if (localStorage.participants) {
-      this.participants = JSON.parse(localStorage.participants)
-    }
-  },
-  watch: {
-    participants: {
-      handler(newParticipants, oldParticipants) {
-        localStorage.participants = JSON.stringify(newParticipants)
-      },
-      deep: true,
-    },
-  },
-  methods: {
-    addParticipant() {
-      if (this.newParticipant.trim() == '') {
-        return
-      }
-      if (this.participants.includes(this.newParticipant)) {
-        this.error_msg = 'Error: There is already someone called ' + this.newParticipant
-        return
-      }
+const newParticipant = defineModel()
+const participants = ref([])
+const error_msg = ref('')
+if (localStorage.participants) {
+  participants.value = JSON.parse(localStorage.participants)
+}
 
-      this.participants.push(this.newParticipant)
-      this.newParticipant = ''
-      this.error_msg = ''
-    },
-    removeParticipant(participant_idx) {
-      this.participants.splice(participant_idx, 1)
-      this.error_msg = ''
-    },
+watch(
+  participants,
+  () => {
+    localStorage.participants = JSON.stringify(participants.value)
   },
-})
+  { deep: true },
+)
+
+function addParticipant() {
+  if (newParticipant.value.trim() == '') {
+    return
+  }
+  if (participants.value.includes(newParticipant.value)) {
+    error_msg.value = 'Error: There is already someone called ' + newParticipant.value
+    return
+  }
+
+  participants.value.push(newParticipant.value)
+  newParticipant.value = ''
+  error_msg.value = ''
+}
+
+function removeParticipant(participant_idx) {
+  participants.value.splice(participant_idx, 1)
+  error_msg.value = ''
+}
 </script>
 
 <template>
@@ -52,7 +44,7 @@ export default defineComponent({
     <h3>Participants</h3>
     <span v-if="error_msg != ''">{{ error_msg }}</span>
     <ul>
-      <li v-for="(participant, index) in participants">
+      <li v-for="(participant, index) in participants" :key="participant">
         {{ participant }} <span @click="removeParticipant(index)">X</span>
       </li>
     </ul>
@@ -60,46 +52,3 @@ export default defineComponent({
     <button @click="addParticipant">Add</button>
   </div>
 </template>
-<!--<template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
-</template>
-
-<style scoped>
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
-</style>
--->
