@@ -1,9 +1,66 @@
-<script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+<script lang="ts">
+// import HelloWorld from './components/HelloWorld.vue'
+// import TheWelcome from './components/TheWelcome.vue'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
+  data() {
+    return {
+      participants: [],
+      newParticipant: '',
+      error_msg: '',
+    }
+  },
+  mounted() {
+    if (localStorage.participants) {
+      this.participants = JSON.parse(localStorage.participants)
+    }
+  },
+  watch: {
+    participants: {
+      handler(newParticipants, oldParticipants) {
+        localStorage.participants = JSON.stringify(newParticipants)
+      },
+      deep: true,
+    },
+  },
+  methods: {
+    addParticipant() {
+      if (this.newParticipant.trim() == '') {
+        return
+      }
+      if (this.participants.includes(this.newParticipant)) {
+        this.error_msg = 'Error: There is already someone called ' + this.newParticipant
+        return
+      }
+
+      this.participants.push(this.newParticipant)
+      this.newParticipant = ''
+      this.error_msg = ''
+    },
+    removeParticipant(participant_idx) {
+      this.participants.splice(participant_idx, 1)
+      this.error_msg = ''
+    },
+  },
+})
 </script>
 
 <template>
+  <h1>Expenses Splitter</h1>
+  <div>
+    <h3>Participants</h3>
+    <span v-if="error_msg != ''">{{ error_msg }}</span>
+    <ul>
+      <li v-for="(participant, index) in participants">
+        {{ participant }} <span @click="removeParticipant(index)">X</span>
+      </li>
+    </ul>
+    <input v-model="newParticipant" @keyup.enter="addParticipant" />
+    <button @click="addParticipant">Add</button>
+  </div>
+</template>
+<!--<template>
   <header>
     <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
 
@@ -45,3 +102,4 @@ header {
   }
 }
 </style>
+-->
