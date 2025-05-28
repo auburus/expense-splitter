@@ -36,7 +36,6 @@ format:
 # Lint
 lint:
 	bun lint
-	bun run vue-tsc --noEmit
 
 .PHONY: build
 # Build

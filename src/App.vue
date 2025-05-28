@@ -43,7 +43,7 @@ const transfers: Ref<Transfer[]> = ref([])
 const newParticipant: Ref<string> = ref('')
 // New expense
 const payee = ref('')
-const expenseValue = ref(0)
+const expenseValue: Ref<string> = ref('0')
 const expenseSplit: Ref<Split[]> = ref([])
 const customSplit = ref(false)
 
@@ -78,13 +78,13 @@ watch(
 function splitExpense() {
   expenseSplit.value = participants.value.map((participant) => ({
     participant: participant,
-    amount: expenseValue.value / participants.value.length,
+    amount: parseFloat(expenseValue.value) / participants.value.length,
   }))
 }
 
 function addExpense() {
   expenses.value.push({
-    amount: expenseValue.value,
+    amount: parseFloat(expenseValue.value),
     payee: payee.value,
     split: expenseSplit.value.map((split) => ({
       amount: split.amount,
@@ -93,7 +93,7 @@ function addExpense() {
   })
 
   payee.value = ''
-  expenseValue.value = 0
+  expenseValue.value = '0'
   expenseSplit.value = []
   customSplit.value = false
 }
