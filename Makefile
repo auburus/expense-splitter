@@ -16,6 +16,7 @@ setenv:
 	mise trust --all
 	mise install
 	bun install
+	bunx playwright install --only-shell
 
 .PHONY: dev
 # Start up dev instance

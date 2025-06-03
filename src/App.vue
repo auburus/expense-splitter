@@ -43,7 +43,7 @@ const transfers: Ref<Transfer[]> = ref([])
 const newParticipant: Ref<string> = ref('')
 // New expense
 const payee = ref('')
-const expenseValue: Ref<string> = ref('0')
+const expenseValue: Ref<string> = ref('')
 const expenseSplit: Ref<Split[]> = ref([])
 const customSplit = ref(false)
 
@@ -92,8 +92,9 @@ function addExpense() {
     })),
   })
 
+  // Clear form
   payee.value = ''
-  expenseValue.value = '0'
+  expenseValue.value = ''
   expenseSplit.value = []
   customSplit.value = false
 }
