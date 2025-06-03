@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // import HelloWorld from './components/HelloWorld.vue'
 // import TheWelcome from './components/TheWelcome.vue'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import type { Ref } from 'vue'
 
 interface User {
@@ -37,8 +37,6 @@ interface Transfer {
 // Global
 const participants: Ref<User[]> = ref([])
 const expenses: Ref<Expense[]> = ref([])
-const debts: Ref<Debt> = ref({})
-const transfers: Ref<Transfer[]> = ref([])
 
 // New participant
 const newParticipant: Ref<string> = ref('')
@@ -76,9 +74,6 @@ watch(expenseValue, () => {
   splitExpense()
 })
 
-// Recalculate Debts And Transfers
-watch(() => participants.value.length + expenses.value.length, recalculateDebtsAndTransfers)
-
 function splitExpense() {
   expenseSplit.value = participants.value.map((participant: User) => ({
     participant: participant,
@@ -107,16 +102,11 @@ function clearErrors() {
   error_msg.value = ''
 }
 
-function recalculateDebtsAndTransfers() {
-  debts.value = calculateDebts(participants.value, expenses.value)
-  transfers.value = calculateTransfers(debts.value, participants.value)
-}
-
-function calculateDebts(participants: User[], expenses: Expense[]) {
+const debts = computed(() => {
   const debts: Debt = {}
-  participants.forEach((participant: User) => {
-    const paid = getAmountPaid(participant, expenses)
-    const received = getAmountReceived(participant, expenses)
+  participants.value.forEach((participant: User) => {
+    const paid = getAmountPaid(participant, expenses.value)
+    const received = getAmountReceived(participant, expenses.value)
     debts[participant.id] = {
       paid: paid,
       received: received,
@@ -125,35 +115,35 @@ function calculateDebts(participants: User[], expenses: Expense[]) {
   })
 
   return debts
-}
+})
 
-function calculateTransfers(debts: Debt, participants: User[]) {
+const transfers = computed(() => {
   const transfers: Transfer[] = []
 
-  participants.forEach((participant) => {
-    while (debts[participant.id]['balance'] > 0) {
-      const participant2: User | undefined = participants.find(
-        (participant2: User) => debts[participant2.id]['balance'] < 0,
+  participants.value.forEach((participant) => {
+    while (debts.value[participant.id]['balance'] > 0) {
+      const participant2: User | undefined = participants.value.find(
+        (participant2: User) => debts.value[participant2.id]['balance'] < 0,
       )
       if (participant2 === undefined) {
         throw new TypeError("Couldn't find a user that owes money. Unexpected.")
       }
       const amount = Math.min(
-        debts[participant.id]['balance'],
-        Math.abs(debts[participant2.id]['balance']),
+        debts.value[participant.id]['balance'],
+        Math.abs(debts.value[participant2.id]['balance']),
       )
       transfers.push({
         src: participant,
         dst: participant2,
         amount: amount,
       })
-      debts[participant.id]['balance'] -= amount
-      debts[participant2.id]['balance'] += amount
+      debts.value[participant.id]['balance'] -= amount
+      debts.value[participant2.id]['balance'] += amount
     }
   })
 
   return transfers
-}
+})
 
 function getAmountPaid(participant: User, expenses: Expense[]) {
   return expenses.reduce((acc, expense) => {
@@ -230,13 +220,9 @@ function removeParticipant(participantId: number) {
     <h4>Summary</h4>
     <ul>
       <li v-for="expense in expenses" :key="expense.payee.id">
-        <i>{{ expense.payee.name }}</i> has paid <b>{{ expense.amount }}</b> (<span
-          v-for="split in expense.split"
-          :key="split.participant.id"
-        >
-          {{ split.amount }} for <i>{{ split.participant.name }}</i
-          >,&nbsp; </span
-        >)
+        <i>{{ expense.payee.name }}</i> has paid <b>{{ expense.amount }}</b> (<span v-for="split in expense.split"
+          :key="split.participant.id">
+          {{ split.amount }} for <i>{{ split.participant.name }}</i>,&nbsp; </span>)
         <!--{{ expense }} <span @click="removeExpense(index)">X</span>-->
       </li>
     </ul>
@@ -254,23 +240,13 @@ function removeParticipant(participantId: number) {
       <!-- <input id="expenseValue" v-model="expenseValue" @focus="$event.target.select()" /> -->
       <input id="expenseValue" v-model="expenseValue" />
       <br />
-      <input
-        type="checkbox"
-        id="customSplit"
-        name="customSplit"
-        v-model="customSplit"
-        @click="splitExpense"
-      />
+      <input type="checkbox" id="customSplit" name="customSplit" v-model="customSplit" @click="splitExpense" />
       <label for="customSplit">Custom split?</label>
       <br />
       <div v-if="customSplit">
         <div v-for="split in expenseSplit" :key="split.participant.id">
           <label :for="'split-' + split.participant.id">{{ split.participant.name }}</label>
-          <input
-            :name="'split-' + split.participant.id"
-            v-model.number="split.amount"
-            type="number"
-          />
+          <input :name="'split-' + split.participant.id" v-model.number="split.amount" type="number" />
         </div>
       </div>
       <br />
@@ -290,7 +266,7 @@ function removeParticipant(participantId: number) {
       <h4>Transfers</h4>
       <ul>
         <li v-for="transfer in transfers" :key="transfer.src.id">
-          <i>{{ transfer.src.name }}</i> owes <i>{{ transfer.dst.name }}</i>
+          <i>{{ transfer.src.name }}</i> owes <i>{{ transfer.dst.name }}</i>&nbsp;
           <b>{{ transfer.amount }}</b> Eur
         </li>
       </ul>
