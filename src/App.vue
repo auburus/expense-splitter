@@ -215,6 +215,25 @@ function removeParticipant(participantId: number) {
 <template>
   <h1>Expenses Splitter</h1>
   <div>
+    <h3>Result</h3>
+    <div v-if="transfers.length === 0">All debts are settled, no transfers necessary</div>
+    <div v-else>
+      <ul>
+        <li v-for="transfer in transfers" :key="transfer.src.id">
+          <i>{{ transfer.src.name }}</i> owes <i>{{ transfer.dst.name }}</i
+          >&nbsp; <b>{{ transfer.amount }}</b> Eur
+        </li>
+      </ul>
+      <h5>Debts</h5>
+      <ul>
+        <li v-for="(debt, participantId) in debts" :key="participantId">
+          <i>{{ participantId }}</i> has paid <b>{{ debt.paid }}</b> and received
+          <b>{{ debt.received }}</b>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div>
     <h3>Participants</h3>
     <span v-if="error_msg != ''">{{ error_msg }}</span>
     <ul>
@@ -241,25 +260,6 @@ function removeParticipant(participantId: number) {
     <div>
       <h4>New Expense</h4>
       <NewExpense :participants="participants" @submit="addExpense" />
-    </div>
-  </div>
-  <div>
-    <h3>Result</h3>
-    <div>
-      <h4>Debts</h4>
-      <ul>
-        <li v-for="(debt, participantId) in debts" :key="participantId">
-          <i>{{ participantId }}</i> has paid <b>{{ debt.paid }}</b> and received
-          <b>{{ debt.received }}</b>
-        </li>
-      </ul>
-      <h4>Transfers</h4>
-      <ul>
-        <li v-for="transfer in transfers" :key="transfer.src.id">
-          <i>{{ transfer.src.name }}</i> owes <i>{{ transfer.dst.name }}</i
-          >&nbsp; <b>{{ transfer.amount }}</b> Eur
-        </li>
-      </ul>
     </div>
   </div>
 </template>
