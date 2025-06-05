@@ -46,4 +46,5 @@ build:
 .PHONY: test
 # Test
 test:
-	bun test:e2e
+	# bun test:e2e
+	vitest
