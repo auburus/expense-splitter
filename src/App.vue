@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // import HelloWorld from './components/HelloWorld.vue'
 // import TheWelcome from './components/TheWelcome.vue'
-import { ref, watch, computed } from 'vue'
+import NewExpense from './components/NewExpense.vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import type { Ref } from 'vue'
 
 interface User {
@@ -16,6 +17,7 @@ interface Split {
 
 interface Expense {
   amount: number
+  concept: string
   payee: User
   split: Split[]
 }
@@ -42,22 +44,12 @@ const expenses: Ref<Expense[]> = ref([])
 const newParticipant: Ref<string> = ref('')
 let newUserIdx = 0
 
-// New expense
-const payee: Ref<User> = ref({ id: -1, name: '' })
-const expenseValue: Ref<string> = ref('')
-const expenseSplit: Ref<Split[]> = ref([])
-const customSplit = ref(false)
-
 // Global
 const error_msg = ref('')
 
-// Load previous state
-if (localStorage.participants) {
-  const savedState = JSON.parse(localStorage.savedState)
-  if ('version' in savedState && savedState['version'] === 1) {
-    participants.value = savedState.participants
-  }
-}
+onMounted(() => {
+  loadPreviousState()
+})
 
 watch(
   participants,
@@ -70,33 +62,52 @@ watch(
   { deep: true },
 )
 
-watch(expenseValue, () => {
-  splitExpense()
-})
-
-function splitExpense() {
-  expenseSplit.value = participants.value.map((participant: User) => ({
-    participant: participant,
-    amount: parseFloat(expenseValue.value) / participants.value.length,
-  }))
+function loadPreviousState() {
+  if (localStorage.savedState) {
+    const savedState = JSON.parse(localStorage.savedState)
+    if (!('version' in savedState)) {
+      delete localStorage.savedState
+      return
+    }
+    if (savedState['version'] === 1) {
+      participants.value = savedState.participants
+      newUserIdx = Math.max(...participants.value.map((participants) => participants.id)) + 1
+    }
+  }
 }
 
-function addExpense() {
-  expenses.value.push({
-    amount: parseFloat(expenseValue.value),
-    payee: payee.value,
-    split: expenseSplit.value.map((split) => ({
-      amount: split.amount,
-      participant: split.participant,
-    })),
-  })
-
-  // Clear form
-  payee.value = { id: -1, name: '' }
-  expenseValue.value = ''
-  expenseSplit.value = []
-  customSplit.value = false
+function addExpense(expense: Expense) {
+  console.log('Event received')
+  expenses.value.push(expense)
+  console.log('Expenses pushed')
+  console.log(expenses)
 }
+
+// Clear form
+// payee.value = { id: -1, name: '' }
+// expenseValue.value = ''
+// expenseSplit.value = []
+// customSplit.value = false
+// }
+
+// function addExpense() {
+// expenses.value.push({
+// id: newExpenseIdx,
+// amount: parseFloat(expenseValue.value),
+// payee: payee.value,
+// split: expenseSplit.value.map((split) => ({
+// amount: split.amount,
+// participant: split.participant,
+// })),
+// })
+//
+// newExpenseIdx += 1
+// Clear form
+// payee.value = { id: -1, name: '' }
+// expenseValue.value = ''
+// expenseSplit.value = []
+// customSplit.value = false
+// }
 
 function clearErrors() {
   error_msg.value = ''
@@ -220,37 +231,16 @@ function removeParticipant(participantId: number) {
     <h4>Summary</h4>
     <ul>
       <li v-for="expense in expenses" :key="expense.payee.id">
-        <i>{{ expense.payee.name }}</i> has paid <b>{{ expense.amount }}</b> (<span v-for="split in expense.split"
-          :key="split.participant.id">
-          {{ split.amount }} for <i>{{ split.participant.name }}</i>,&nbsp; </span>)
-        <!--{{ expense }} <span @click="removeExpense(index)">X</span>-->
+        <i>{{ expense.payee.name }}</i> has paid <b>{{ expense.amount }}</b> for
+        {{ expense.concept }} (<span v-for="split in expense.split" :key="split.participant.id">
+          {{ split.amount }} for <i>{{ split.participant.name }}</i
+          >,&nbsp; </span
+        >)
       </li>
     </ul>
     <div>
       <h4>New Expense</h4>
-      <label for="payee">Payee</label>
-      <select id="payee" v-model="payee">
-        <option disabled value=""></option>
-        <option v-for="participant in participants" :key="participant.id" :value="participant">
-          {{ participant.name }}
-        </option>
-      </select>
-      <br />
-      <label for="expenseValue">Amount</label>
-      <!-- <input id="expenseValue" v-model="expenseValue" @focus="$event.target.select()" /> -->
-      <input id="expenseValue" v-model="expenseValue" />
-      <br />
-      <input type="checkbox" id="customSplit" name="customSplit" v-model="customSplit" @click="splitExpense" />
-      <label for="customSplit">Custom split?</label>
-      <br />
-      <div v-if="customSplit">
-        <div v-for="split in expenseSplit" :key="split.participant.id">
-          <label :for="'split-' + split.participant.id">{{ split.participant.name }}</label>
-          <input :name="'split-' + split.participant.id" v-model.number="split.amount" type="number" />
-        </div>
-      </div>
-      <br />
-      <button @click="addExpense">Add</button>
+      <NewExpense :participants="participants" @submit="addExpense" />
     </div>
   </div>
   <div>
@@ -266,8 +256,8 @@ function removeParticipant(participantId: number) {
       <h4>Transfers</h4>
       <ul>
         <li v-for="transfer in transfers" :key="transfer.src.id">
-          <i>{{ transfer.src.name }}</i> owes <i>{{ transfer.dst.name }}</i>&nbsp;
-          <b>{{ transfer.amount }}</b> Eur
+          <i>{{ transfer.src.name }}</i> owes <i>{{ transfer.dst.name }}</i
+          >&nbsp; <b>{{ transfer.amount }}</b> Eur
         </li>
       </ul>
     </div>
