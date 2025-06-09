@@ -83,32 +83,6 @@ function addExpense(expense: Expense) {
   console.log(expenses)
 }
 
-// Clear form
-// payee.value = { id: -1, name: '' }
-// expenseValue.value = ''
-// expenseSplit.value = []
-// customSplit.value = false
-// }
-
-// function addExpense() {
-// expenses.value.push({
-// id: newExpenseIdx,
-// amount: parseFloat(expenseValue.value),
-// payee: payee.value,
-// split: expenseSplit.value.map((split) => ({
-// amount: split.amount,
-// participant: split.participant,
-// })),
-// })
-//
-// newExpenseIdx += 1
-// Clear form
-// payee.value = { id: -1, name: '' }
-// expenseValue.value = ''
-// expenseSplit.value = []
-// customSplit.value = false
-// }
-
 function clearErrors() {
   error_msg.value = ''
 }

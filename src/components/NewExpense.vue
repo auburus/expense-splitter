@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { unevenSplit } from '../utils.ts'
-import { ref, watch, onMounted, defineProps, defineEmits } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import type { Ref } from 'vue'
 
 interface User {

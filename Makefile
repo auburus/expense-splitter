@@ -1,4 +1,4 @@
-export PATH := $(HOME)/.local/share/mise/shims:$(PATH)
+export PATH := $(CURDIR)/node_modules/.bin:$(HOME)/.local/share/mise/shims:$(PATH)
 # export MISE_TRUSTED_CONFIG_PATHS := $(CURDIR)
 
 .PHONY: help
@@ -21,7 +21,7 @@ setenv:
 .PHONY: dev
 # Start up dev instance
 dev:
-	bun dev
+	vite
 
 .PHONY: clean
 # Clean
@@ -31,12 +31,13 @@ clean:
 .PHONY: format
 # Format
 format:
-	bun format
+	prettier --write src/
 
 .PHONY: lint
 # Lint
 lint:
-	bun lint
+	eslint . --fix
+	vue-tsc --build
 
 .PHONY: build
 # Build
