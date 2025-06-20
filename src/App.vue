@@ -23,11 +23,9 @@ interface Expense {
 }
 
 interface Debt {
-  [index: string]: {
-    paid: number
-    received: number
-    balance: number
-  }
+  participant: User
+  paid: number
+  received: number
 }
 
 interface Transfer {
@@ -52,11 +50,12 @@ onMounted(() => {
 })
 
 watch(
-  participants,
+  [participants, expenses],
   () => {
     localStorage.savedState = JSON.stringify({
-      version: 1,
+      version: 2,
       participants: participants.value,
+      expenses: expenses.value,
     })
   },
   { deep: true },
@@ -73,14 +72,17 @@ function loadPreviousState() {
       participants.value = savedState.participants
       newUserIdx = Math.max(...participants.value.map((participants) => participants.id)) + 1
     }
+    if (savedState['version'] === 2) {
+      participants.value = savedState.participants
+      newUserIdx = Math.max(...participants.value.map((participants) => participants.id)) + 1
+
+      expenses.value = savedState.expenses
+    }
   }
 }
 
 function addExpense(expense: Expense) {
-  console.log('Event received')
   expenses.value.push(expense)
-  console.log('Expenses pushed')
-  console.log(expenses)
 }
 
 function clearErrors() {
@@ -88,42 +90,41 @@ function clearErrors() {
 }
 
 const debts = computed(() => {
-  const debts: Debt = {}
-  participants.value.forEach((participant: User) => {
-    const paid = getAmountPaid(participant, expenses.value)
-    const received = getAmountReceived(participant, expenses.value)
-    debts[participant.id] = {
-      paid: paid,
-      received: received,
-      balance: received - paid,
-    }
-  })
-
-  return debts
+  return participants.value.map((participant: User) => ({
+    participant: participant,
+    paid: getAmountPaid(participant, expenses.value),
+    received: getAmountReceived(participant, expenses.value),
+  }))
 })
 
 const transfers = computed(() => {
   const transfers: Transfer[] = []
+  const balances = debts.value.reduce((acc: { [index: number]: number }, debt: Debt) => {
+    acc[debt.participant.id] = debt.received - debt.paid
+    return acc
+  }, {})
+  // const balances = Object.keys(debts.value).reduce((acc: { [index: string]: number }, participant_id: string) => {
+  //   acc[participant_id] = debts.value[participant_id].received - debts.value[participant_id].paid
+  //   return acc
+  // }, {})
 
   participants.value.forEach((participant) => {
-    while (debts.value[participant.id]['balance'] > 0) {
+    while (balances[participant.id] > 0) {
       const participant2: User | undefined = participants.value.find(
-        (participant2: User) => debts.value[participant2.id]['balance'] < 0,
+        (participant2: User) => balances[participant2.id] < 0,
       )
       if (participant2 === undefined) {
         throw new TypeError("Couldn't find a user that owes money. Unexpected.")
       }
-      const amount = Math.min(
-        debts.value[participant.id]['balance'],
-        Math.abs(debts.value[participant2.id]['balance']),
-      )
+      const amount = Math.min(balances[participant.id], Math.abs(balances[participant2.id]))
       transfers.push({
         src: participant,
         dst: participant2,
         amount: amount,
       })
-      debts.value[participant.id]['balance'] -= amount
-      debts.value[participant2.id]['balance'] += amount
+
+      balances[participant.id] -= amount
+      balances[participant2.id] += amount
     }
   })
 
@@ -132,7 +133,7 @@ const transfers = computed(() => {
 
 function getAmountPaid(participant: User, expenses: Expense[]) {
   return expenses.reduce((acc, expense) => {
-    if (expense.payee === participant) {
+    if (expense.payee.id === participant.id) {
       return acc + expense.amount
     }
     return acc
@@ -144,7 +145,7 @@ function getAmountReceived(participant: User, expenses: Expense[]) {
     return (
       acc +
       expense.split.reduce((acc, split) => {
-        if (split.participant === participant) {
+        if (split.participant.id === participant.id) {
           return acc + split.amount
         }
         return acc
@@ -200,12 +201,24 @@ function removeParticipant(participantId: number) {
       </ul>
       <h5>Debts</h5>
       <ul>
-        <li v-for="(debt, participantId) in debts" :key="participantId">
-          <i>{{ participantId }}</i> has paid <b>{{ debt.paid }}</b> and received
+        <li v-for="debt in debts" :key="debt.participant.id">
+          <i>{{ debt.participant.name }}</i> has paid <b>{{ debt.paid }}</b> and received
           <b>{{ debt.received }}</b>
         </li>
       </ul>
     </div>
+  </div>
+  <div>
+    <h4>Summary</h4>
+    <ul>
+      <li v-for="expense in expenses" :key="expense.payee.id">
+        <i>{{ expense.payee.name }}</i> has paid <b>{{ expense.amount }}</b> for
+        {{ expense.concept }} (<span v-for="split in expense.split" :key="split.participant.id">
+          {{ split.amount }} for <i>{{ split.participant.name }}</i
+          >,&nbsp; </span
+        >)
+      </li>
+    </ul>
   </div>
   <div>
     <h3>Participants</h3>
@@ -221,16 +234,6 @@ function removeParticipant(participantId: number) {
   </div>
   <div>
     <h3>Expenses</h3>
-    <h4>Summary</h4>
-    <ul>
-      <li v-for="expense in expenses" :key="expense.payee.id">
-        <i>{{ expense.payee.name }}</i> has paid <b>{{ expense.amount }}</b> for
-        {{ expense.concept }} (<span v-for="split in expense.split" :key="split.participant.id">
-          {{ split.amount }} for <i>{{ split.participant.name }}</i
-          >,&nbsp; </span
-        >)
-      </li>
-    </ul>
     <div>
       <h4>New Expense</h4>
       <NewExpense :participants="participants" @submit="addExpense" />
