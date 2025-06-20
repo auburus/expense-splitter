@@ -20,3 +20,7 @@ export function unevenSplit(total: number, parts: number) {
 
   return ret.map((x) => x / 100)
 }
+
+export function formatCurrency(amount: number, opts: object = {}): string {
+  return Intl.NumberFormat('es-es', { style: 'currency', currency: 'EUR', ...opts }).format(amount)
+}

@@ -4,35 +4,8 @@
 import NewExpense from './components/NewExpense.vue'
 import { ref, watch, computed, onMounted } from 'vue'
 import type { Ref } from 'vue'
-
-interface User {
-  id: number
-  name: string
-}
-
-interface Split {
-  amount: number
-  participant: User
-}
-
-interface Expense {
-  amount: number
-  concept: string
-  payee: User
-  split: Split[]
-}
-
-interface Debt {
-  participant: User
-  paid: number
-  received: number
-}
-
-interface Transfer {
-  src: User
-  dst: User
-  amount: number
-}
+import { formatCurrency } from './utils'
+import type { User, Expense, Debt, Transfer } from './types'
 
 // Global
 const participants: Ref<User[]> = ref([])
@@ -103,10 +76,6 @@ const transfers = computed(() => {
     acc[debt.participant.id] = debt.received - debt.paid
     return acc
   }, {})
-  // const balances = Object.keys(debts.value).reduce((acc: { [index: string]: number }, participant_id: string) => {
-  //   acc[participant_id] = debts.value[participant_id].received - debts.value[participant_id].paid
-  //   return acc
-  // }, {})
 
   participants.value.forEach((participant) => {
     while (balances[participant.id] > 0) {
@@ -184,10 +153,6 @@ function removeParticipant(participantId: number) {
   }
   participants.value.splice(participantIdx, 1)
   clearErrors()
-}
-
-function formatCurrency(amount: number, opts: object = {}): string {
-  return Intl.NumberFormat('es-es', { style: 'currency', currency: 'EUR', ...opts }).format(amount)
 }
 </script>
 
