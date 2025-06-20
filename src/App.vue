@@ -185,6 +185,10 @@ function removeParticipant(participantId: number) {
   participants.value.splice(participantIdx, 1)
   clearErrors()
 }
+
+function formatCurrency(amount: number, opts: object = {}): string {
+  return Intl.NumberFormat('es-es', { style: 'currency', currency: 'EUR', ...opts }).format(amount)
+}
 </script>
 
 <template>
@@ -195,15 +199,15 @@ function removeParticipant(participantId: number) {
     <div v-else>
       <ul>
         <li v-for="transfer in transfers" :key="transfer.src.id">
-          <i>{{ transfer.src.name }}</i> owes <i>{{ transfer.dst.name }}</i
-          >&nbsp; <b>{{ transfer.amount }}</b> Eur
+          {{ transfer.src.name }} owes {{ transfer.dst.name }} {{ formatCurrency(transfer.amount) }}
         </li>
       </ul>
       <h5>Debts</h5>
       <ul>
         <li v-for="debt in debts" :key="debt.participant.id">
-          <i>{{ debt.participant.name }}</i> has paid <b>{{ debt.paid }}</b> and received
-          <b>{{ debt.received }}</b>
+          {{ debt.participant.name }} paid {{ formatCurrency(debt.paid) }} ({{
+            formatCurrency(debt.paid - debt.received, { signDisplay: 'always' })
+          }})
         </li>
       </ul>
     </div>
@@ -212,10 +216,9 @@ function removeParticipant(participantId: number) {
     <h4>Summary</h4>
     <ul>
       <li v-for="expense in expenses" :key="expense.payee.id">
-        <i>{{ expense.payee.name }}</i> has paid <b>{{ expense.amount }}</b> for
+        {{ expense.payee.name }} paid {{ formatCurrency(expense.amount) }} for
         {{ expense.concept }} (<span v-for="split in expense.split" :key="split.participant.id">
-          {{ split.amount }} for <i>{{ split.participant.name }}</i
-          >,&nbsp; </span
+          {{ formatCurrency(split.amount) }} for {{ split.participant.name }},&nbsp;</span
         >)
       </li>
     </ul>
