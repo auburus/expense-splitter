@@ -2,7 +2,7 @@
 import { unevenSplit } from '../utils.ts'
 import { ref, watch, onMounted } from 'vue'
 import type { Ref } from 'vue'
-import type { User } from '../types'
+import type { User } from '@/types'
 
 interface Split {
   amount: string

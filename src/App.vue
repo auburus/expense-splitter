@@ -157,7 +157,7 @@ function removeParticipant(participantId: number) {
 </script>
 
 <template>
-  <h1>Expenses Splitter</h1>
+  <h1 class="text-8xl text-red-500">Expenses Splitter</h1>
   <div>
     <h3>Result</h3>
     <div v-if="transfers.length === 0">All debts are settled, no transfers necessary</div>
@@ -201,7 +201,7 @@ function removeParticipant(participantId: number) {
     <button @click="addParticipant">Add</button>
   </div>
   <div>
-    <h3>Expenses</h3>
+    <h3 class="text-red">Expenses</h3>
     <div>
       <h4>New Expense</h4>
       <NewExpense :participants="participants" @submit="addExpense" />
