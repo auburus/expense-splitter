@@ -24,3 +24,9 @@ export function unevenSplit(total: number, parts: number) {
 export function formatCurrency(amount: number, opts: object = {}): string {
   return Intl.NumberFormat('es-es', { style: 'currency', currency: 'EUR', ...opts }).format(amount)
 }
+
+export function randomColor(n: number): string {
+  // const colors = ["#002b36", "#073642", "#586e75", "#657b83", "#839496", "#93a1a1", "#eee8d5", "#fdf6e3", "#b58900", "#cb4b16", "#dc322f", "#d33682", "#6c71c4", "#268bd2", "#2aa198", "#859900"]
+  const colors = ['#5F6062', '#AFB8C1', '#849E97', '#DBBDA1', '#DECAC1']
+  return colors[Math.abs(n) % colors.length]
+}

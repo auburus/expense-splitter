@@ -1,11 +1,12 @@
 <script setup lang="ts">
-// import HelloWorld from './components/HelloWorld.vue'
-// import TheWelcome from './components/TheWelcome.vue'
-import NewExpense from './components/NewExpense.vue'
 import { ref, watch, computed, onMounted } from 'vue'
 import type { Ref } from 'vue'
 import { formatCurrency } from './utils'
 import type { User, Expense, Debt, Transfer } from './types'
+
+import NewExpense from './components/NewExpense.vue'
+import UserDebtsSummary from './components/UserDebtsSummary.vue'
+import TransferDisplay from './components/TransferDisplay.vue'
 
 // Global
 const participants: Ref<User[]> = ref([])
@@ -157,25 +158,27 @@ function removeParticipant(participantId: number) {
 </script>
 
 <template>
-  <h1 class="text-8xl text-red-500">Expenses Splitter</h1>
-  <div>
-    <h3>Result</h3>
-    <div v-if="transfers.length === 0">All debts are settled, no transfers necessary</div>
-    <div v-else>
-      <ul>
-        <li v-for="transfer in transfers" :key="transfer.src.id">
-          {{ transfer.src.name }} owes {{ transfer.dst.name }} {{ formatCurrency(transfer.amount) }}
-        </li>
+  <div class="max-w-7xl px-4 mx-auto">
+    <h1 class="text-4xl font-bold my-4">Expenses Splitter</h1>
+    <div class="container max-w-sm">
+      <h5 class="text-2xl py-2">Summary</h5>
+      <ul role="list" class="divide-y divide-gray-200">
+        <UserDebtsSummary v-for="debt in debts" :key="debt.participant.id" :debt="debt" />
       </ul>
-      <h5>Debts</h5>
-      <ul>
-        <li v-for="debt in debts" :key="debt.participant.id">
-          {{ debt.participant.name }} paid {{ formatCurrency(debt.paid) }} ({{
-            formatCurrency(debt.paid - debt.received, { signDisplay: 'always' })
-          }})
-        </li>
+
+      <h5 class="text-2xl py-2">Settle Debts</h5>
+      <div v-if="transfers.length === 0">All debts are settled, no transfers necessary</div>
+      <ul v-else role="list" class="divide-y divide-gray-200">
+        <TransferDisplay
+          v-for="transfer in transfers"
+          :key="transfer.src.id"
+          :transfer="transfer"
+        />
       </ul>
     </div>
+  </div>
+  <div>
+    <h3>Result</h3>
   </div>
   <div>
     <h4>Summary</h4>
